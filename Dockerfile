@@ -9,11 +9,11 @@ ENV PYTHON_VERSION 3.6.0
 ENV PYTHON_PIP_VERSION 9.0.1
 
 RUN apk update --no-cache \
-  && apk add --no-cache ca-certificates \
+  # run deps
+  && apk add --no-cache ca-certificates musl zlib openssl \
 
   # fetch python
-  && apk add --no-cache --virtual .fetch-deps \
-    gnupg openssl tar xz \
+  && apk add --no-cache --virtual .fetch-deps gnupg openssl tar xz \
   && wget -O python.tar.xz "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz" \
   && wget -O python.tar.xz.asc "https://www.python.org/ftp/python/${PYTHON_VERSION%%[a-z]*}/Python-$PYTHON_VERSION.tar.xz.asc" \
   && export GNUPGHOME="$(mktemp -d)" \
@@ -30,7 +30,6 @@ RUN apk update --no-cache \
     linux-headers \
     make \
     ncurses-dev \
-    openssl \
     openssl-dev \
     pax-utils \
     readline-dev \
@@ -62,4 +61,10 @@ RUN apk update --no-cache \
 
   # clean up
   && apk del .build-deps .fetch-deps \
-  && rm -rf /usr/src/python ~/.cache
+  && rm -rf /usr/src/python ~/.cache \
+  && find /usr/local -depth \
+    \( \
+      \( -type d -a -name test -o -name tests \) \
+      -o \
+      \( -type f -a -name '*.pyc' -o -name '*.pyo' \) \
+    \) -exec rm -rf '{}' +
